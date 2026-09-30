@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeployWatch</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main>
+    <h1>DeployWatch</h1>
+
+    <form method="post" action="/sites" class="add">
+      <input type="url" name="url" placeholder="https://example.com" required>
+      <label>Check every
+        <input type="number" name="interval_minutes" value="5" min="1" max="1440"> min
+      </label>
+      <button type="submit">Add site</button>
+    </form>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    {% if rows %}
+    <table>
+      <thead>
+        <tr><th>URL</th><th>Status</th><th>Code</th><th>Time</th><th>Last checked (UTC)</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for site, result in rows %}
+        <tr>
+          <td>{{ site.url }}<br><small>every {{ site.interval_minutes }} min</small></td>
+          {% if result %}
+            <td><span class="badge {{ 'up' if result.success else 'down' }}">{{ 'Up' if result.success else 'Down' }}</span>
+              {% if result.error %}<br><small>{{ result.error }}</small>{% endif %}</td>
+            <td>{{ result.status_code or '-' }}</td>
+            <td>{{ result.response_time_ms }} ms</td>
+            <td>{{ result.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          {% else %}
+            <td colspan="4"><span class="badge none">Not checked yet</span></td>
+          {% endif %}
+          <td>
+            <form method="post" action="/sites/{{ site.id }}/check"><button type="submit">Check now</button></form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No sites yet. Add one above.</p>
+    {% endif %}
+  </main>
+</body>
+</html>
