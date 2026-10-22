@@ -4,8 +4,24 @@ import httpx
 
 from . import alerts
 from .models import CheckResult, Site
+from .urlsafety import UnsafeURLError, validate_url
 
 TIMEOUT_SECONDS = 10.0
+MAX_BODY_BYTES = 1_000_000  # stop reading after ~1 MB
+
+
+def _fetch_status(url: str, timeout: float) -> int:
+    """GET the URL, reading at most MAX_BODY_BYTES and at most `timeout` seconds in total."""
+    start = perf_counter()
+    with httpx.stream("GET", url, timeout=timeout, follow_redirects=False) as response:
+        read = 0
+        for chunk in response.iter_bytes():
+            if perf_counter() - start > timeout:
+                raise httpx.ReadTimeout("total time limit exceeded")
+            read += len(chunk)
+            if read >= MAX_BODY_BYTES:
+                break
+        return response.status_code
 
 
 def check_site(db, site: Site, timeout: float = TIMEOUT_SECONDS) -> CheckResult:
@@ -18,11 +34,13 @@ def check_site(db, site: Site, timeout: float = TIMEOUT_SECONDS) -> CheckResult:
     success = False
     start = perf_counter()
     try:
-        response = httpx.get(site.url, timeout=timeout, follow_redirects=False)
-        status_code = response.status_code
+        validate_url(site.url)  # re-checked on every request, not just when added
+        status_code = _fetch_status(site.url, timeout)
         success = 200 <= status_code < 400
         if not success:
             error = f"HTTP {status_code}"
+    except UnsafeURLError as exc:
+        error = f"Blocked: {exc}"
     except httpx.TimeoutException:
         error = "Timeout"
     except httpx.HTTPError as exc:

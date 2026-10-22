@@ -1,0 +1,58 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Git
+.git/
+.gitignore
+
+# Database files (local development)
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

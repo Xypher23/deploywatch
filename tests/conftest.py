@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import urlsafety
 from app.database import Base
 from app.models import Site
 
@@ -24,3 +25,9 @@ def site(db):
     db.add(s)
     db.commit()
     return s
+
+
+@pytest.fixture(autouse=True)
+def public_dns(monkeypatch):
+    """Tests never touch real DNS: every hostname resolves to a public address."""
+    monkeypatch.setattr(urlsafety, "_resolve", lambda host, port: ["93.184.216.34"])

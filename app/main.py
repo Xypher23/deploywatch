@@ -1,7 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -14,6 +13,7 @@ from .checker import check_site
 from .database import Base, engine, get_db
 from .models import CheckResult, Site
 from .scheduler import start_scheduler
+from .urlsafety import UnsafeURLError, validate_url
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -69,11 +69,10 @@ def add_site(
     db: Session = Depends(get_db),
 ):
     url = url.strip()
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        return _render_dashboard(
-            request, db, "Enter a full http:// or https:// URL.", status_code=400
-        )
+    try:
+        validate_url(url)
+    except UnsafeURLError as exc:
+        return _render_dashboard(request, db, str(exc), status_code=400)
     if not 1 <= interval_minutes <= 1440:
         return _render_dashboard(
             request, db, "Interval must be between 1 and 1440 minutes.", status_code=400
