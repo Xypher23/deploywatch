@@ -2,6 +2,7 @@ from time import perf_counter
 
 import httpx
 
+from . import alerts
 from .models import CheckResult, Site
 
 TIMEOUT_SECONDS = 10.0
@@ -35,6 +36,9 @@ def check_site(db, site: Site, timeout: float = TIMEOUT_SECONDS) -> CheckResult:
         success=success,
         error=error,
     )
+    site.consecutive_failures = 0 if success else site.consecutive_failures + 1
     db.add(result)
     db.commit()
+    if not success and site.consecutive_failures == alerts.ALERT_THRESHOLD:
+        alerts.send_discord_alert(site, result)
     return result

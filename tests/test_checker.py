@@ -1,33 +1,9 @@
 import httpx
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app import checker
-from app.database import Base, get_db
+from app.database import get_db
 from app.main import app
-from app.models import Site
-
-
-@pytest.fixture
-def db():
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
-    session = sessionmaker(bind=engine, expire_on_commit=False)()
-    yield session
-    session.close()
-
-
-@pytest.fixture
-def site(db):
-    s = Site(url="https://example.com", interval_minutes=5)
-    db.add(s)
-    db.commit()
-    return s
 
 
 def fake_get(status):
@@ -80,5 +56,7 @@ def test_add_site_and_check_now(db, monkeypatch):
         client.post("/sites/1/check")
         page = client.get("/")
         assert "https://example.com" in page.text and "Up" in page.text
+        assert "200" in client.get("/sites/1").text
+        assert client.get("/sites/99").status_code == 404
     finally:
         app.dependency_overrides.clear()

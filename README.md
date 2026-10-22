@@ -14,3 +14,16 @@ pytest
 Dependencies: FastAPI (web framework), Uvicorn (server), Jinja2 (HTML templates),
 python-multipart (form parsing), httpx (HTTP checks), SQLAlchemy (database layer;
 SQLite locally, PostgreSQL later via `DATABASE_URL`), pytest (tests).
+
+## Monitoring and alerts (week 2)
+
+- A background scheduler (APScheduler) wakes up every minute and checks each site
+  whose last check is older than its interval. Run a **single** Uvicorn worker, or
+  checks will be duplicated.
+- After 3 consecutive failures, one Discord message is sent. The counter resets on
+  the next successful check. Copy `.env.example` to `.env` and set
+  `DISCORD_WEBHOOK_URL` (never commit `.env`).
+- Each site has a history page at `/sites/<id>`.
+- New dependencies: `apscheduler` (background jobs), `python-dotenv` (reads `.env`).
+- If you upgraded from week 1, delete the old `deploywatch.db` once so the new
+  `consecutive_failures` column is created.

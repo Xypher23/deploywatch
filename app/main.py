@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse
@@ -12,6 +13,9 @@ from sqlalchemy.orm import Session
 from .checker import check_site
 from .database import Base, engine, get_db
 from .models import CheckResult, Site
+from .scheduler import start_scheduler
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
@@ -20,7 +24,9 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(engine)
+    scheduler = start_scheduler()
     yield
+    scheduler.shutdown(wait=False)
 
 
 app = FastAPI(title="DeployWatch", lifespan=lifespan)
@@ -84,3 +90,20 @@ def check_now(site_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Site not found")
     check_site(db, site)
     return RedirectResponse("/", status_code=303)
+
+
+@app.get("/sites/{site_id}")
+def site_history(site_id: int, request: Request, db: Session = Depends(get_db)):
+    site = db.get(Site, site_id)
+    if site is None:
+        raise HTTPException(status_code=404, detail="Site not found")
+    stmt = (
+        select(CheckResult)
+        .where(CheckResult.site_id == site_id)
+        .order_by(CheckResult.id.desc())
+        .limit(50)
+    )
+    results = db.scalars(stmt).all()
+    return templates.TemplateResponse(
+        request, "history.html", {"site": site, "results": results}
+    )

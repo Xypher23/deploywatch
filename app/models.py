@@ -16,6 +16,7 @@ class Site(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     url: Mapped[str] = mapped_column(String(2048))
     interval_minutes: Mapped[int] = mapped_column(Integer, default=5)
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 

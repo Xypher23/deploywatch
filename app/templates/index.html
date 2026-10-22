@@ -27,10 +27,11 @@
       <tbody>
       {% for site, result in rows %}
         <tr>
-          <td>{{ site.url }}<br><small>every {{ site.interval_minutes }} min</small></td>
+          <td><a href="/sites/{{ site.id }}">{{ site.url }}</a><br><small>every {{ site.interval_minutes }} min</small></td>
           {% if result %}
             <td><span class="badge {{ 'up' if result.success else 'down' }}">{{ 'Up' if result.success else 'Down' }}</span>
-              {% if result.error %}<br><small>{{ result.error }}</small>{% endif %}</td>
+              {% if result.error %}<br><small>{{ result.error }}</small>{% endif %}
+              {% if site.consecutive_failures %}<br><small>{{ site.consecutive_failures }} failed in a row</small>{% endif %}</td>
             <td>{{ result.status_code or '-' }}</td>
             <td>{{ result.response_time_ms }} ms</td>
             <td>{{ result.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
