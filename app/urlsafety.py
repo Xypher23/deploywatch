@@ -29,24 +29,34 @@ def _is_public(address: str) -> bool:
 
 def validate_url(url: str) -> None:
     """Raise UnsafeURLError unless url is http(s) and only resolves to public addresses.
-
     Hosts that do not resolve at all are allowed: there is nothing to connect to,
     and the check will simply record a connection error.
     """
     try:
         parsed = urlparse(url)
-        host, port = parsed.hostname, parsed.port
     except ValueError:
         raise UnsafeURLError("Enter a full http:// or https:// URL.")
-    if parsed.scheme not in ("http", "https") or not host:
+
+    # Scheme must be http or https
+    if parsed.scheme not in ("http", "https"):
         raise UnsafeURLError("Enter a full http:// or https:// URL.")
+    
+    # Host must be present
+    if not parsed.hostname:
+        raise UnsafeURLError("Enter a full http:// or https:// URL.")
+
+    # Credentials not allowed
     if parsed.username or parsed.password:
         raise UnsafeURLError("URLs with a username or password are not allowed.")
+
+    host = parsed.hostname
+    port = parsed.port
 
     blocked = UnsafeURLError("That address is not allowed (private or internal network).")
     name = host.lower().rstrip(".")
     if name in BLOCKED_HOSTNAMES or name.endswith(".localhost"):
         raise blocked
+
     try:
         addresses = [str(ipaddress.ip_address(name))]
     except ValueError:

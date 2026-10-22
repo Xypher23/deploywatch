@@ -1,33 +1,98 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>History - {{ site.url }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/theme.js"></script>
   <link rel="stylesheet" href="/static/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['SFMono-Regular', 'Consolas', 'Liberation Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body>
-  <main>
-    <p><a href="/">&larr; Back to dashboard</a></p>
-    <h1>{{ site.url }}</h1>
-    <p><small>Checked every {{ site.interval_minutes }} min &middot; {{ site.consecutive_failures }} failed in a row &middot; showing the last 50 checks</small></p>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased transition-colors duration-200">
+  <main class="max-w-[980px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
+    <header class="flex items-center justify-between gap-4 min-h-[48px] pb-4 border-b border-slate-200 dark:border-slate-800">
+      <a class="inline-flex items-center gap-3 min-w-0 text-slate-900 dark:text-slate-100 hover:no-underline" href="/" aria-label="DeployWatch dashboard">
+        <span class="grid w-[29px] h-[29px] place-items-center rounded-md bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-900">
+          <svg viewBox="0 0 24 24" fill="none" class="w-[21px] h-[21px]"><path d="M3 12h4l2.2-5 4.1 10 2.1-5H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="grid gap-px">
+          <span class="text-base font-bold tracking-tight leading-tight">DeployWatch</span>
+          <span class="text-slate-500 dark:text-slate-400 text-[10px]">Scheduled HTTP health &amp; uptime monitor</span>
+        </span>
+      </a>
+      <div class="flex items-center gap-3 flex-none">
+        <span class="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-xs font-semibold whitespace-nowrap border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          Scheduled checks active
+        </span>
+        <label class="theme-control" for="theme-select">
+          <span class="sr-only">Appearance</span>
+          <select id="theme-select" name="theme" aria-label="Choose color theme" class="max-w-[92px] min-h-[27px] px-2 border rounded-md bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-400 text-xs cursor-pointer">
+            <option value="system">System</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <section class="mt-6 mb-4">
+      <div>
+        <a class="inline-block mb-3 text-slate-500 dark:text-slate-400 text-xs" href="/">&larr; Back to dashboard</a>
+        <h1 class="m-0 break-all font-mono text-xl md:text-2xl tracking-tight">{{ site.url }}</h1>
+        <p class="mt-2 text-slate-500 dark:text-slate-400 text-xs">Checked every {{ site.interval_minutes }} min &middot; {{ site.consecutive_failures }} failed in a row &middot; showing the last 50 checks</p>
+      </div>
+    </section>
     {% if results %}
-    <table>
-      <thead><tr><th>Time (UTC)</th><th>Status</th><th>Code</th><th>Response time</th><th>Error</th></tr></thead>
-      <tbody>
-      {% for r in results %}
-        <tr>
-          <td>{{ r.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-          <td><span class="badge {{ 'up' if r.success else 'down' }}">{{ 'Up' if r.success else 'Down' }}</span></td>
-          <td>{{ r.status_code or '-' }}</td>
-          <td>{{ r.response_time_ms }} ms</td>
-          <td>{{ r.error or '' }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+    <section class="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 shadow-sm overflow-hidden" aria-labelledby="history-title">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+        <h2 id="history-title" class="m-0 text-xs">Recent checks</h2>
+        <span class="text-slate-500 dark:text-slate-400 text-xs">{{ results|length }} results</span>
+      </div>
+      <div class="overflow-x-auto" role="region" aria-label="Recent site checks" tabindex="0">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-slate-800">
+              <th scope="col" class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Time (UTC)</th>
+              <th scope="col" class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Status</th>
+              <th scope="col" class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Code</th>
+              <th scope="col" class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Response time</th>
+              <th scope="col" class="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Error</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {% for r in results %}
+            <tr>
+              <td class="px-4 py-3 font-mono text-[10px] whitespace-nowrap">{{ r.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {% if r.success %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300{% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300{% endif %}">{{ 'Up' if r.success else 'Down' }}</span>
+              </td>
+              <td class="px-4 py-3 font-mono text-[10px]">{{ r.status_code or '-' }}</td>
+              <td class="px-4 py-3 font-mono text-[10px]">{{ r.response_time_ms }} ms</td>
+              <td class="px-4 py-3 text-xs">{{ r.error or '' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
     {% else %}
-    <p>No checks yet.</p>
+    <section class="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 shadow-sm p-7 text-center text-slate-500 dark:text-slate-400">
+      <p>No checks yet for this site.</p>
+    </section>
     {% endif %}
   </main>
 </body>

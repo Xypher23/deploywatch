@@ -2,6 +2,8 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from urllib.parse import urlparse
+
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -69,6 +71,10 @@ def add_site(
     db: Session = Depends(get_db),
 ):
     url = url.strip()
+    # Only prepend https:// if URL doesn't already have a scheme
+    parsed_check = urlparse(url)
+    if not parsed_check.scheme:
+        url = "https://" + url
     try:
         validate_url(url)
     except UnsafeURLError as exc:
@@ -106,3 +112,13 @@ def site_history(site_id: int, request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request, "history.html", {"site": site, "results": results}
     )
+
+
+@app.post("/sites/{site_id}/delete")
+def delete_site(site_id: int, db: Session = Depends(get_db)):
+    site = db.get(Site, site_id)
+    if site is None:
+        raise HTTPException(status_code=404, detail="Site not found")
+    db.delete(site)
+    db.commit()
+    return RedirectResponse("/", status_code=303)

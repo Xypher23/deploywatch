@@ -1,53 +1,130 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DeployWatch</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/theme.js"></script>
   <link rel="stylesheet" href="/static/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['SFMono-Regular', 'Consolas', 'Liberation Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body>
-  <main>
-    <h1>DeployWatch</h1>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased transition-colors duration-200">
+  <main class="max-w-[980px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
+    <header class="flex items-center justify-between gap-4 min-h-[48px] pb-4 border-b border-slate-200 dark:border-slate-800">
+      <a class="inline-flex items-center gap-3 min-w-0 text-slate-900 dark:text-slate-100 hover:no-underline" href="/" aria-label="DeployWatch dashboard">
+        <span class="grid w-[29px] h-[29px] place-items-center rounded-md bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-900">
+          <svg viewBox="0 0 24 24" fill="none" class="w-[21px] h-[21px]"><path d="M3 12h4l2.2-5 4.1 10 2.1-5H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="grid gap-px">
+          <span class="text-base font-bold tracking-tight leading-tight">DeployWatch</span>
+          <span class="text-slate-500 dark:text-slate-400 text-[10px]">Scheduled HTTP health &amp; uptime monitor</span>
+        </span>
+      </a>
+      <div class="flex items-center gap-3 flex-none">
+        <span class="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-xs font-semibold whitespace-nowrap border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_7px_rgba(25,199,122,0.45)]"></span>
+          Scheduled checks active
+        </span>
+        <label class="theme-control" for="theme-select">
+          <span class="sr-only">Appearance</span>
+          <select id="theme-select" name="theme" aria-label="Choose color theme" class="max-w-[92px] min-h-[27px] px-2 border rounded-md bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-400 text-xs cursor-pointer">
+            <option value="system">System</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+      </div>
+    </header>
 
-    <form method="post" action="/sites" class="add">
-      <input type="url" name="url" placeholder="https://example.com" required>
-      <label>Check every
-        <input type="number" name="interval_minutes" value="5" min="1" max="1440"> min
-      </label>
-      <button type="submit">Add site</button>
-    </form>
-    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <section class="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 shadow-sm my-4 p-4" aria-label="Add a site to monitor">
+      <form method="post" action="/sites" class="flex items-center gap-2">
+        <div class="flex flex-1 min-w-[120px] min-h-[31px] items-center gap-2 px-2 border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-950 text-slate-400">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="w-3 h-3 flex-none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 12h17M12 3c2.1 2.3 3.2 5.3 3.2 9s-1.1 6.7-3.2 9c-2.1-2.3-3.2-5.3-3.2-9S9.9 5.3 12 3Z" stroke="currentColor" stroke-width="1.5"/></svg>
+          <input type="url" name="url" placeholder="https://example.com" aria-label="Site URL" required class="w-full py-0 bg-transparent text-slate-900 dark:text-slate-100 text-xs outline-none border-none">
+        </div>
+        <label class="flex min-h-[31px] flex-none items-center gap-2 px-2 border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 text-xs whitespace-nowrap">
+          <span>Check every</span>
+          <input type="number" name="interval_minutes" value="5" min="1" max="1440" aria-label="Check interval in minutes" required class="w-10 h-[22px] px-1 border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-[11px] text-center">
+          <span>min</span>
+        </label>
+        <button class="inline-flex items-center gap-2 min-h-[31px] px-3 border rounded-md text-white bg-slate-900 hover:bg-slate-800 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400 text-sm font-semibold whitespace-nowrap" type="submit"><span aria-hidden="true">+</span> Add site</button>
+      </form>
+      {% if error %}<p class="text-red-600 dark:text-red-400 text-xs mt-2" role="alert">{{ error }}</p>{% endif %}
+    </section>
 
-    {% if rows %}
-    <table>
-      <thead>
-        <tr><th>URL</th><th>Status</th><th>Code</th><th>Time</th><th>Last checked (UTC)</th><th></th></tr>
-      </thead>
-      <tbody>
-      {% for site, result in rows %}
-        <tr>
-          <td><a href="/sites/{{ site.id }}">{{ site.url }}</a><br><small>every {{ site.interval_minutes }} min</small></td>
-          {% if result %}
-            <td><span class="badge {{ 'up' if result.success else 'down' }}">{{ 'Up' if result.success else 'Down' }}</span>
-              {% if result.error %}<br><small>{{ result.error }}</small>{% endif %}
-              {% if site.consecutive_failures %}<br><small>{{ site.consecutive_failures }} failed in a row</small>{% endif %}</td>
-            <td>{{ result.status_code or '-' }}</td>
-            <td>{{ result.response_time_ms }} ms</td>
-            <td>{{ result.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+    {% set totals = namespace(up=0, down=0) %}
+    {% for site, result in rows %}
+      {% if result and result.success %}{% set totals.up = totals.up + 1 %}
+      {% elif result %}{% set totals.down = totals.down + 1 %}{% endif %}
+    {% endfor %}
+
+    <section class="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 shadow-sm overflow-hidden" aria-label="Monitored websites">
+      <div class="overflow-x-auto" role="region" aria-label="Monitored sites" tabindex="0">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">URL</th>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Code</th>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Time</th>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Last checked<br>(UTC)</th>
+              <th scope="col" class="px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {% for site, result in rows %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="px-4 py-3 align-top">
+                <a class="text-[11px] leading-relaxed break-all hover:underline text-sky-600 dark:text-sky-400 font-mono" href="/sites/{{ site.id }}">{{ site.url }}</a>
+                <br><small class="text-slate-500 dark:text-slate-400 text-[9px]">Every {{ site.interval_minutes }} min</small>
+              </td>
+              {% if result %}
+                <td class="px-4 py-3 align-top">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {% if result.success %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300{% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300{% endif %}">{{ 'Up' if result.success else 'Down' }}</span>
+                  {% if result.error %}<small class="block mt-1 text-slate-500 dark:text-slate-400 text-[9px] font-mono">{{ result.error }}</small>{% endif %}
+                  {% if site.consecutive_failures %}<small class="block mt-1 text-slate-500 dark:text-slate-400 text-[9px]">{{ site.consecutive_failures }} failed in a row</small>{% endif %}
+                </td>
+                <td class="px-4 py-3 font-mono text-[10px]">{{ result.status_code or '-' }}</td>
+                <td class="px-4 py-3 font-mono text-[10px]">{{ result.response_time_ms }} ms</td>
+                <td class="px-4 py-3 font-mono text-[10px] whitespace-nowrap">{{ result.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              {% else %}
+                <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Pending</span></td>
+                <td class="px-4 py-3 font-mono text-[10px]">-</td>
+                <td class="px-4 py-3 font-mono text-[10px]">-</td>
+                <td class="px-4 py-3 font-mono text-[10px]">Not checked yet</td>
+              {% endif %}
+              <td class="px-4 py-3 text-center align-middle">
+                <div class="flex flex-col gap-1 items-center">
+                  <form method="post" action="/sites/{{ site.id }}/check"><button type="submit" class="w-12 text-[10px] py-1 border rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">Check<br>now</button></form>
+                  <form method="post" action="/sites/{{ site.id }}/delete" onsubmit="return confirm('Delete this site?');"><button type="submit" class="w-12 text-[10px] py-1 border rounded bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800">Delete</button></form>
+                </div>
+              </td>
+            </tr>
           {% else %}
-            <td colspan="4"><span class="badge none">Not checked yet</span></td>
-          {% endif %}
-          <td>
-            <form method="post" action="/sites/{{ site.id }}/check"><button type="submit">Check now</button></form>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>No sites yet. Add one above.</p>
-    {% endif %}
+            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No sites yet. Add a URL above to start monitoring.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="flex justify-between gap-4 pt-4 text-slate-500 dark:text-slate-400 text-[10px]">
+      <p>Total: <strong class="text-slate-900 dark:text-slate-100">{{ rows|length }}</strong> <span class="ml-3 text-emerald-600 dark:text-emerald-400 font-semibold">Up: {{ totals.up }}</span> <span class="ml-3 text-rose-600 dark:text-rose-400 font-semibold">Down: {{ totals.down }}</span></p>
+      <p>Check timestamps are shown in UTC</p>
+    </footer>
   </main>
 </body>
 </html>
