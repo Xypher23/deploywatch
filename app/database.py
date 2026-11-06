@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./deploywatch.db")
+DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./deploywatch.db"  # blank counts as unset
 _args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(DATABASE_URL, connect_args=_args)

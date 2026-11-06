@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt -r requirements-dev.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Runtime stage
 FROM python:3.11-slim AS runtime
@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /install /usr/local
 
 # Create non-root user
-RUN useradd --create-home --shell /bin/bash appuser
+RUN useradd --create-home --shell /bin/bash appuser && chown appuser:appuser /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/

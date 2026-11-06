@@ -1,0 +1,3 @@
+[lint]
+# FastAPI idiom: Depends(...) and Form(...) as default arguments
+ignore = ["B008"]

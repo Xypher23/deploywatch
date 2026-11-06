@@ -26,10 +26,7 @@ docker compose ps
 docker compose logs -f app
 
 # Open the dashboard
-open http://localhost:8000/
-
-# Run tests inside the container
-docker compose exec app pytest -v
+# then browse to http://localhost:8000/
 
 # Stop the stack (add -v to remove database volume)
 docker compose down
@@ -38,7 +35,11 @@ docker compose down
 ## Run tests locally
 
 ```bash
-pytest -v
+pytest -v        # fast, in-memory SQLite
+ruff check .     # lint, also run in CI
+
+# optional: run the same tests against PostgreSQL
+TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/testdb pytest -v
 ```
 
 ## Dependencies
@@ -51,8 +52,8 @@ pytest -v
 - **SQLAlchemy** (database layer; SQLite locally, PostgreSQL via `DATABASE_URL`)
 - **apscheduler** (background jobs)
 - **python-dotenv** (reads `.env`)
-- **psycopg2-binary** (PostgreSQL driver)
-- **pytest** (tests)
+- **psycopg** (PostgreSQL driver, v3)
+- **pytest** (tests) and **ruff** (lint), dev only
 
 ## Monitoring and alerts (week 2)
 

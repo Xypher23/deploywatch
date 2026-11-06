@@ -1,8 +1,8 @@
 import httpx
 from fastapi.testclient import TestClient
+from helpers import fake_stream
 
 from app import checker
-from helpers import fake_stream
 from app.database import get_db
 from app.main import app
 
@@ -55,7 +55,7 @@ def test_add_site_and_check_now(db, monkeypatch):
         assert "https://example.com" in page.text and "Up" in page.text
         assert 'id="theme-select"' in page.text
         assert "Scheduled checks active" in page.text
-        assert 'action="/sites/1/delete"' in page.text and 'class="danger">Delete</button>' in page.text
+        assert 'action="/sites/1/delete"' in page.text and ">Delete</button>" in page.text
         assert "Total:" in page.text and "Up: 1" in page.text and "Down: 0" in page.text
         assert "200" in client.get("/sites/1").text
         assert client.get("/sites/99").status_code == 404

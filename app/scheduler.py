@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import select
@@ -16,7 +16,7 @@ TOLERANCE = timedelta(seconds=30)
 
 
 def _now():
-    return datetime.now(timezone.utc).replace(tzinfo=None)  # DB stores naive UTC
+    return datetime.now(UTC).replace(tzinfo=None)  # DB stores naive UTC
 
 
 def run_due_checks(db) -> int:

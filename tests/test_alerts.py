@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
+from helpers import fake_stream
 
 from app import alerts, checker, scheduler
 from app.models import CheckResult
-from helpers import fake_stream
 
 
 def fail(*a, **kw):
@@ -77,7 +77,7 @@ def test_scheduler_checks_only_due_sites(db, site, monkeypatch):
     monkeypatch.setattr(checker.httpx, "stream", ok)
     assert scheduler.run_due_checks(db) == 1   # never checked -> due
     assert scheduler.run_due_checks(db) == 0   # just checked -> not due
-    old = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=10)
+    old = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=10)
     db.query(CheckResult).update({"checked_at": old})
     db.commit()
     assert scheduler.run_due_checks(db) == 1   # last check is stale -> due

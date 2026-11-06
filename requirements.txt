@@ -6,4 +6,4 @@ httpx
 sqlalchemy
 apscheduler
 python-dotenv
-psycopg
+psycopg[binary]

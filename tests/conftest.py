@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -7,16 +9,24 @@ from app import urlsafety
 from app.database import Base
 from app.models import Site
 
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite://")  # set to a Postgres URL in CI
+
 
 @pytest.fixture
 def db():
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
+    if TEST_DATABASE_URL.startswith("sqlite"):
+        engine = create_engine(
+            TEST_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+        )
+    else:
+        engine = create_engine(TEST_DATABASE_URL)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine, expire_on_commit=False)()
     yield session
     session.close()
+    Base.metadata.drop_all(engine)
+    engine.dispose()
 
 
 @pytest.fixture

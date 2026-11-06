@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -16,7 +16,7 @@ def send_discord_alert(site, result) -> bool:
         logger.warning("DISCORD_WEBHOOK_URL not set; skipping alert for %s", site.url)
         return False
 
-    when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    when = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     content = (
         f"\U0001F534 **{site.url}** is DOWN: {ALERT_THRESHOLD} checks failed in a row.\n"
         f"Last error: {result.error}\nTime: {when}"
