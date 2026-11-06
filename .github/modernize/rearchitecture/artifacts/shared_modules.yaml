@@ -1,0 +1,86 @@
+modules:
+  - name: check-engine
+    kind: utility
+    source_loc: app/checker.py:27
+    used_by_units:
+      - http-dashboard-site-management
+      - scheduled-site-checks
+    fields:
+      - name: check_site
+        type: "(db, site: Site, timeout: float = 10.0) -> CheckResult"
+      - name: TIMEOUT_SECONDS
+        type: float
+      - name: MAX_BODY_BYTES
+        type: int
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Shared check orchestration; used for both immediate HTTP-triggered checks and scheduled checks."
+  - name: database-access
+    kind: config
+    source_loc: app/database.py:12
+    used_by_units:
+      - http-dashboard-site-management
+      - scheduled-site-checks
+    fields:
+      - name: Base
+        type: "SQLAlchemy DeclarativeBase subclass"
+      - name: engine
+        type: "SQLAlchemy Engine"
+      - name: SessionLocal
+        type: "SQLAlchemy sessionmaker"
+      - name: get_db
+        type: "() -> database session dependency"
+      - name: DATABASE_URL
+        type: str
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Shared engine/session configuration for request handlers and the scheduler worker."
+  - name: monitor-models
+    kind: dto
+    source_loc: app/models.py:13
+    used_by_units:
+      - http-dashboard-site-management
+      - scheduled-site-checks
+    fields:
+      - name: Site
+        type: "SQLAlchemy model for sites"
+      - name: CheckResult
+        type: "SQLAlchemy model for check_results"
+      - name: utcnow
+        type: "() -> datetime"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Shared ORM rows are queried, updated, and persisted by both runtime units."
+  - name: url-validation
+    kind: utility
+    source_loc: app/urlsafety.py:30
+    used_by_units:
+      - http-dashboard-site-management
+      - scheduled-site-checks
+    fields:
+      - name: validate_url
+        type: "(url: str) -> None"
+      - name: UnsafeURLError
+        type: "ValueError subclass"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "The HTTP handler validates submitted URLs, and the shared checker validates again before requests."
+  - name: discord-alerting
+    kind: utility
+    source_loc: app/alerts.py:12
+    used_by_units:
+      - http-dashboard-site-management
+      - scheduled-site-checks
+    fields:
+      - name: send_discord_alert
+        type: "(site, result) -> bool"
+      - name: ALERT_THRESHOLD
+        type: int
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Alerts are triggered from the shared check engine regardless of whether a check was immediate or scheduled."

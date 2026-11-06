@@ -1,0 +1,61 @@
+unit: scheduled-site-checks
+side_effects:
+  - source_loc: app/scheduler.py:53
+    effect: "Registers an in-process interval job; the application lifespan starts the scheduler."
+    must_preserve: true
+  - source_loc: app/scheduler.py:34
+    effect: "Invokes the shared checker for each site whose latest check is due."
+    must_preserve: true
+  - source_loc: app/checker.py:59
+    effect: "Persists the check result and updated consecutive-failure counter."
+    must_preserve: true
+  - source_loc: app/checker.py:60
+    effect: "Sends a Discord alert when the failure count reaches the configured threshold."
+    must_preserve: true
+branches:
+  - source_loc: app/scheduler.py:33
+    condition: "No prior CheckResult exists, or elapsed time reaches interval_minutes minus the 30-second tolerance."
+    behavior: "Checks the site during this scheduled run."
+    must_preserve: true
+  - source_loc: app/scheduler.py:58
+    condition: "A previous scheduler invocation is still active."
+    behavior: "APScheduler limits the job to one concurrent instance."
+    must_preserve: true
+  - source_loc: app/scheduler.py:59
+    condition: "Multiple scheduled ticks accumulate while a run is delayed."
+    behavior: "APScheduler coalesces missed executions."
+    must_preserve: true
+  - source_loc: app/checker.py:42
+    condition: "The requested destination fails URL validation."
+    behavior: "The check is recorded as unsuccessful with a 'Blocked: ...' error."
+    must_preserve: true
+  - source_loc: app/checker.py:44
+    condition: "The monitored request times out."
+    behavior: "The check is recorded as unsuccessful with error 'Timeout'."
+    must_preserve: true
+  - source_loc: app/checker.py:46
+    condition: "The monitored request raises another httpx.HTTPError."
+    behavior: "The check is recorded as unsuccessful with exception type and truncated message."
+    must_preserve: true
+  - source_loc: app/checker.py:57
+    condition: "A check succeeds."
+    behavior: "Resets consecutive_failures to zero; otherwise increments it."
+    must_preserve: true
+error_paths:
+  - source_loc: app/scheduler.py:45
+    trigger: "An exception escapes the scheduled run."
+    outcome: "Logs the exception; closes the database session in finally."
+    contract: "No external response; scheduled job logs the failure."
+    must_preserve: true
+  - source_loc: app/checker.py:42
+    trigger: "Monitored URL request times out or raises an HTTP error."
+    outcome: "Persists an unsuccessful CheckResult with status/error information."
+    contract: "CheckResult stores nullable status_code and an error string."
+    must_preserve: true
+concurrency:
+  model: thread-pool
+  tx_boundary:
+    source_loc: app/checker.py:59
+    scope: "The check result insert and site consecutive_failures update are committed together after each check."
+    isolation: "Database default; no explicit isolation level configured."
+    must_preserve: true

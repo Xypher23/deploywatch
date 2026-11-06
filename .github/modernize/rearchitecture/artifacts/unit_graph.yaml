@@ -1,0 +1,68 @@
+units:
+  - name: http-dashboard-site-management
+    trigger: api
+    trigger_detail: "HTTP requests: GET /health, GET /, POST /sites, POST /sites/{site_id}/check, GET /sites/{site_id}, POST /sites/{site_id}/delete; static resources at /static/*"
+    source_anchors:
+      - path: app/main.py
+        line: 27
+      - path: app/templates/index.html
+      - path: app/templates/history.html
+      - path: app/static/theme.js
+      - path: app/static/style.css
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on:
+      - unit: scheduled-site-checks
+        via: "FastAPI lifespan calls start_scheduler() during startup."
+    shared_refs:
+      - module: check-engine
+        used_fields:
+          - check_site
+      - module: database-access
+        used_fields:
+          - Base
+          - engine
+          - get_db
+      - module: monitor-models
+        used_fields:
+          - Site
+          - CheckResult
+      - module: url-validation
+        used_fields:
+          - UnsafeURLError
+          - validate_url
+      - module: discord-alerting
+        used_fields:
+          - ALERT_THRESHOLD
+          - send_discord_alert
+  - name: scheduled-site-checks
+    trigger: job
+    trigger_detail: "APScheduler interval job every 60 seconds; one instance at a time; first run scheduled at startup"
+    source_anchors:
+      - path: app/scheduler.py
+        line: 51
+    exported_signature: []
+    dynamic_entrypoints:
+      - target: app.scheduler._job
+        mechanism: convention
+        source_loc: app/scheduler.py:53
+    depends_on: []
+    shared_refs:
+      - module: check-engine
+        used_fields:
+          - check_site
+      - module: database-access
+        used_fields:
+          - SessionLocal
+      - module: monitor-models
+        used_fields:
+          - Site
+          - CheckResult
+      - module: url-validation
+        used_fields:
+          - UnsafeURLError
+          - validate_url
+      - module: discord-alerting
+        used_fields:
+          - ALERT_THRESHOLD
+          - send_discord_alert

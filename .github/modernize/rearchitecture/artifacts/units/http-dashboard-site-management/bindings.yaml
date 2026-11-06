@@ -1,0 +1,63 @@
+unit: http-dashboard-site-management
+bindings:
+  - type: route-declaration
+    name: "GET /health"
+    source_loc: app/main.py:38
+    target: "health"
+    must_appear_in_target: true
+    notes: "Returns a JSON health status."
+  - type: route-declaration
+    name: "GET /"
+    source_loc: app/main.py:61
+    target: "dashboard"
+    must_appear_in_target: true
+    notes: "Renders the dashboard through Jinja2."
+  - type: route-declaration
+    name: "POST /sites"
+    source_loc: app/main.py:66
+    target: "add_site"
+    must_appear_in_target: true
+    notes: "Consumes form fields url and interval_minutes."
+  - type: route-declaration
+    name: "POST /sites/{site_id}/check"
+    source_loc: app/main.py:91
+    target: "check_now"
+    must_appear_in_target: true
+    notes: "Runs a check and redirects to the dashboard."
+  - type: route-declaration
+    name: "GET /sites/{site_id}"
+    source_loc: app/main.py:100
+    target: "site_history"
+    must_appear_in_target: true
+    notes: "Renders recent check history."
+  - type: route-declaration
+    name: "POST /sites/{site_id}/delete"
+    source_loc: app/main.py:117
+    target: "delete_site"
+    must_appear_in_target: true
+    notes: "Deletes the site and redirects to the dashboard."
+  - type: convention
+    name: "StaticFiles mount at /static"
+    source_loc: app/main.py:35
+    target: "app/static"
+    must_appear_in_target: true
+    notes: "Serves CSS and JavaScript used by the Jinja2 pages."
+  - type: convention
+    name: "FastAPI lifespan"
+    source_loc: app/main.py:27
+    target: "app lifespan"
+    must_appear_in_target: true
+    notes: "Creates ORM tables, starts the scheduler, then shuts it down."
+runtime_config:
+  - key: DATABASE_URL
+    source_loc: app/database.py:9
+    source: env
+    default_value: "sqlite:///./deploywatch.db"
+    must_appear_in_target: true
+    notes: "Selects the SQLAlchemy database connection; SQLite receives check_same_thread=False."
+  - key: DISCORD_WEBHOOK_URL
+    source_loc: app/alerts.py:14
+    source: env
+    default_value: ""
+    must_appear_in_target: true
+    notes: "Controls whether the shared check engine can send Discord down alerts."

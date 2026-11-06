@@ -1,0 +1,129 @@
+contracts:
+  - name: health-status
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:38
+    contract:
+      method: "GET"
+      path: "/health"
+      request: "No request body"
+      response: "JSON object {\"status\":\"ok\"}"
+      error: "No application-specific error path is declared"
+      auth: "None declared"
+    target_contract:
+      method: "GET /health"
+      notes: "Keep the current JSON response shape when preserving the existing HTTP interface."
+    semantic_divergence: []
+  - name: dashboard
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:61
+    contract:
+      method: "GET"
+      path: "/"
+      request: "No request body"
+      response: "Jinja2-rendered HTML dashboard with sites and latest check results"
+      error: "No application-specific error path is declared"
+      auth: "None declared"
+    target_contract:
+      method: "GET /"
+      notes: "Preserve the server-rendered dashboard route and its current response purpose."
+    semantic_divergence: []
+  - name: add-monitored-site
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:66
+    contract:
+      method: "POST"
+      path: "/sites"
+      request: "Form fields: required url; interval_minutes defaults to 5"
+      response: "303 redirect to / on success; rendered dashboard with HTTP 400 for unsafe URL or interval outside 1..1440"
+      error: "Invalid URL or interval returns the dashboard with a user-visible error and status 400"
+      auth: "None declared"
+    target_contract:
+      method: "POST /sites"
+      notes: "Preserve form field names, default interval, accepted interval range, validation response, and redirect."
+    semantic_divergence: []
+  - name: check-site-now
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:91
+    contract:
+      method: "POST"
+      path: "/sites/{site_id}/check"
+      request: "Integer site_id path parameter"
+      response: "303 redirect to / after a check"
+      error: "HTTP 404 with detail 'Site not found' when the site does not exist"
+      auth: "None declared"
+    target_contract:
+      method: "POST /sites/{site_id}/check"
+      notes: "Preserve the immediate-check action, missing-site 404, and successful redirect."
+    semantic_divergence: []
+  - name: site-check-history
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:100
+    contract:
+      method: "GET"
+      path: "/sites/{site_id}"
+      request: "Integer site_id path parameter"
+      response: "Jinja2-rendered history page with at most the 50 newest results"
+      error: "HTTP 404 with detail 'Site not found' when the site does not exist"
+      auth: "None declared"
+    target_contract:
+      method: "GET /sites/{site_id}"
+      notes: "Preserve the route, missing-site behavior, and history page limit."
+    semantic_divergence: []
+  - name: delete-monitored-site
+    unit: http-dashboard-site-management
+    type: rest
+    stability: must_preserve
+    source_loc: app/main.py:117
+    contract:
+      method: "POST"
+      path: "/sites/{site_id}/delete"
+      request: "Integer site_id path parameter"
+      response: "303 redirect to / after deletion"
+      error: "HTTP 404 with detail 'Site not found' when the site does not exist"
+      auth: "None declared"
+    target_contract:
+      method: "POST /sites/{site_id}/delete"
+      notes: "Preserve the current form action, missing-site behavior, and redirect."
+    semantic_divergence: []
+  - name: monitored-url-check
+    unit: scheduled-site-checks
+    type: rest
+    stability: must_preserve
+    source_loc: app/checker.py:16
+    contract:
+      method: "GET"
+      path: "Configured monitored URL"
+      request: "No request body; redirects are not followed; at most approximately 1 MB is read; 10-second timeout"
+      response: "200-399 is considered success; HTTP 400+ is recorded as failure"
+      error: "Timeout and HTTP errors are recorded on CheckResult; unsafe destinations are recorded as blocked"
+      auth: "No outbound authentication is configured by the checker"
+    target_contract:
+      method: "GET configured monitored URL"
+      notes: "Preserve status classification, non-followed redirects, timeout, response-read bound, and persisted errors."
+    semantic_divergence: []
+  - name: discord-down-alert
+    unit: global
+    type: rest
+    stability: must_preserve
+    source_loc: app/alerts.py:24
+    contract:
+      method: "POST"
+      path: "DISCORD_WEBHOOK_URL"
+      request: "JSON object with content string after ALERT_THRESHOLD consecutive failures"
+      response: "Discord webhook success response; non-success HTTP response is logged and returns false"
+      error: "Missing webhook logs a warning and skips delivery; HTTP errors log exception type and return false"
+      auth: "Webhook URL supplied by DISCORD_WEBHOOK_URL"
+    target_contract:
+      method: "POST Discord webhook"
+      notes: "Preserve threshold-triggered delivery, content purpose, timeout, and non-raising error behavior."
+    semantic_divergence: []

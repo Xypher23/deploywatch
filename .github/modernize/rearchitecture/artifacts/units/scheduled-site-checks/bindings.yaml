@@ -1,0 +1,27 @@
+unit: scheduled-site-checks
+bindings:
+  - type: convention
+    name: "APScheduler BackgroundScheduler interval job"
+    source_loc: app/scheduler.py:52
+    target: "app.scheduler._job"
+    must_appear_in_target: true
+    notes: "Runs every TICK_SECONDS (60), with max_instances=1, coalesce=True, and next_run_time set at startup."
+  - type: convention
+    name: "FastAPI lifespan scheduler startup/shutdown"
+    source_loc: app/main.py:27
+    target: "start_scheduler / scheduler.shutdown"
+    must_appear_in_target: true
+    notes: "The scheduler starts on application startup and is shut down with wait=False."
+runtime_config:
+  - key: DATABASE_URL
+    source_loc: app/database.py:9
+    source: env
+    default_value: "sqlite:///./deploywatch.db"
+    must_appear_in_target: true
+    notes: "Selects the database used for site enumeration and check-result persistence."
+  - key: DISCORD_WEBHOOK_URL
+    source_loc: app/alerts.py:14
+    source: env
+    default_value: ""
+    must_appear_in_target: true
+    notes: "Optional delivery endpoint for the three-consecutive-failures alert."

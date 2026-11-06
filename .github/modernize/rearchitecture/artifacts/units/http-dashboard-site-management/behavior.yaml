@@ -1,0 +1,73 @@
+unit: http-dashboard-site-management
+side_effects:
+  - source_loc: app/main.py:28
+    effect: "Creates database tables from SQLAlchemy metadata during application startup."
+    must_preserve: true
+  - source_loc: app/main.py:29
+    effect: "Starts the in-process scheduled checker as part of application startup."
+    must_preserve: true
+  - source_loc: app/main.py:31
+    effect: "Shuts down the scheduler with wait=False when the application lifespan ends."
+    must_preserve: true
+  - source_loc: app/main.py:86
+    effect: "Adds a Site row and commits it after URL and interval validation."
+    must_preserve: true
+  - source_loc: app/main.py:96
+    effect: "Runs a site check immediately; the shared checker records the result and failure counter."
+    must_preserve: true
+  - source_loc: app/main.py:122
+    effect: "Deletes the selected Site row and commits the change."
+    must_preserve: true
+branches:
+  - source_loc: app/main.py:76
+    condition: "Submitted URL has no scheme."
+    behavior: "Prepends https:// before URL validation."
+    must_preserve: true
+  - source_loc: app/main.py:80
+    condition: "URL validation raises UnsafeURLError."
+    behavior: "Renders the dashboard with the validation message and HTTP 400."
+    must_preserve: true
+  - source_loc: app/main.py:82
+    condition: "interval_minutes is outside 1..1440."
+    behavior: "Renders the dashboard with an interval error and HTTP 400."
+    must_preserve: true
+  - source_loc: app/main.py:94
+    condition: "Requested site_id does not identify a Site."
+    behavior: "Raises HTTP 404 with detail 'Site not found'."
+    must_preserve: true
+  - source_loc: app/main.py:103
+    condition: "Requested site_id does not identify a Site."
+    behavior: "Raises HTTP 404 with detail 'Site not found'."
+    must_preserve: true
+  - source_loc: app/main.py:120
+    condition: "Requested site_id does not identify a Site."
+    behavior: "Raises HTTP 404 with detail 'Site not found'."
+    must_preserve: true
+error_paths:
+  - source_loc: app/main.py:80
+    trigger: "Submitted URL is malformed, unsupported, or resolves to a non-public address."
+    outcome: "Dashboard is re-rendered with an error message."
+    contract: "HTTP 400 HTML response."
+    must_preserve: true
+  - source_loc: app/main.py:94
+    trigger: "Immediate check references a missing Site."
+    outcome: "FastAPI HTTP exception."
+    contract: "HTTP 404, detail 'Site not found'."
+    must_preserve: true
+  - source_loc: app/main.py:103
+    trigger: "History request references a missing Site."
+    outcome: "FastAPI HTTP exception."
+    contract: "HTTP 404, detail 'Site not found'."
+    must_preserve: true
+  - source_loc: app/main.py:120
+    trigger: "Delete request references a missing Site."
+    outcome: "FastAPI HTTP exception."
+    contract: "HTTP 404, detail 'Site not found'."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: app/main.py:87
+    scope: "Site creation is committed after validation; immediate check commits its CheckResult and failure-count update in app/checker.py; deletion is committed after db.delete."
+    isolation: "Database default; no explicit isolation level configured."
+    must_preserve: true

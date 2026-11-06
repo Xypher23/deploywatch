@@ -1,0 +1,19 @@
+unit: http-dashboard-site-management
+commit: false
+candidate_splits:
+  - id: app/main.py:61-64
+    drivers: [concern_split]
+    rationale: >
+      The dashboard read/render path is distinct from site mutations and has a
+      separate browser-visible contract; design may consider it independently.
+    source_slice:
+      file: app/main.py
+      lines: [61, 64]
+  - id: app/main.py:66-124
+    drivers: [concern_split]
+    rationale: >
+      Site creation, immediate checks, history rendering, and deletion are
+      separate HTTP actions with distinct validation and error behavior.
+    source_slice:
+      file: app/main.py
+      lines: [66, 124]

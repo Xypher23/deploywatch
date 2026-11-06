@@ -1,0 +1,29 @@
+flows:
+  - name: monitored-sites-selected-for-periodic-checks
+    medium: database
+    key: "sites rows; interval_minutes and id"
+    writer:
+      unit: http-dashboard-site-management
+      source_loc: app/main.py:86
+    reader:
+      unit: scheduled-site-checks
+      source_loc: app/scheduler.py:26
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Create a site through POST /sites and verify the scheduler queries it and applies its configured interval."
+    notes: "HTTP site creation persists the row; the scheduled worker enumerates Site rows to determine whether checks are due."
+  - name: check-results-and-failure-counter
+    medium: database
+    key: "check_results rows and sites.consecutive_failures"
+    writer:
+      unit: scheduled-site-checks
+      source_loc: app/checker.py:57
+    reader:
+      unit: http-dashboard-site-management
+      source_loc: app/main.py:50
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Run a scheduled check and verify its newest result and failure count appear on the dashboard/history."
+    notes: "The scheduled worker calls the shared checker; immediate checks from HTTP use the same writer path."
